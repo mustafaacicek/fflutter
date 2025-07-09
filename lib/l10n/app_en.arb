@@ -1,0 +1,114 @@
+{
+  "@@locale": "en",
+  "appName": "FANLA",
+  "welcomeTitle": "Rediscover the Fan Experience",
+  "welcomeSubtitle": "Follow matches, listen to your team's chants and take your fan experience to the next level.",
+  "startButton": "START",
+  "languageSettings": "Language Settings",
+  "selectLanguage": "Select Language",
+  "languageTurkish": "Turkish",
+  "languageEnglish": "English",
+  "languageSpanish": "Spanish",
+  
+  "loading": "Loading...",
+  "retry": "Retry",
+  "errorGeneric": "An error occurred",
+  "errorUnknown": "An unknown error occurred",
+  "errorLoadingCountries": "Failed to load countries",
+  "errorLoadingTeams": "Failed to load teams",
+  "errorLoadingMatches": "Failed to load matches",
+  "noInternetConnection": "No internet connection",
+  
+  "searchHint": "Search...",
+  "popularCountries": "Popular Countries",
+  "popularTeams": "Popular Teams",
+  "featuredTeams": "Featured Teams",
+  "explore": "EXPLORE",
+  "matches": "MATCHES",
+  "teamCount": "{count} Teams",
+  "@teamCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  
+  "allMatches": "All Matches",
+  "upcomingMatches": "Upcoming",
+  "pastMatches": "Past",
+  "matchStatusPlanned": "PLANNED",
+  "matchStatusPlaying": "PLAYING",
+  "matchStatusFinished": "FINISHED",
+  
+  "lyricsActive": "Lyrics Active",
+  "webSocketConnected": "WebSocket Connected",
+  "webSocketDisconnected": "WebSocket Disconnected",
+  "checkingTeamSounds": "Checking team sounds...",
+  "allSoundsDownloaded": "All sounds downloaded",
+  "downloadingSound": "Downloading sound: {progress}%",
+  "readyToJoinMatch": "You are ready to join the match ({downloaded}/{total} sounds)",
+  "@readyToJoinMatch": {
+    "placeholders": {
+      "downloaded": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "someSoundsMissing": "Some data's are missing ({downloaded}/{total} downloaded)",
+  "downloadingSoundsTitle": "Downloading data Files",
+  "matchDetailSoundsNeeded": "All data files need to be downloaded to access match details.",
+  "soundFilesDownloaded": "{downloaded}/{total} data files downloaded",
+  "@soundFilesDownloaded": {
+    "placeholders": {
+      "downloaded": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "ok": "OK",
+  "@someSoundsMissing": {
+    "placeholders": {
+      "downloaded": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@downloadingSound": {
+    "placeholders": {
+      "progress": {
+        "type": "int"
+      }
+    }
+  },
+  
+  "stadiumNotAvailable": "Stadium information not available",
+  
+  "matchPreparingTitle": "PREPARING FOR MATCH",
+  "matchPreparingSubtitle": "Stadium atmosphere and fan enthusiasm are loading...",
+  "matchReadyTitle": "READY FOR MATCH",
+  "matchReadySubtitle": "Joining the Stadium!",
+  "joinStadium": "OK",
+  "teamInfoNotFound": "Team information not found.",
+  "advertisement": "Advertisement",
+  "websiteUrl": "fanla.net",
+  "privacyNotice": "Fanla does not collect or store any personal data.",
+
+  "firstTeamSelectionTitle": "Team Selection",
+  "firstTeamSelectionMessage": "You will be subscribed to this team for free. If you want to change teams later, you will need to wait for 5 minutes.",
+  "firstTeamSelectionContinue": "Continue",
+  "firstTeamSelectionCancel": "Cancel",
+
+  "preparing": "Preparing...",
+  "downloadingLyrics": "Downloading lyrics: {title}",
+  "downloadingSpecificData": "Downloading specific data..."
+}
