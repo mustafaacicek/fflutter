@@ -1,0 +1,47 @@
+workflows:
+  ios-workflow:
+    name: iOS Build
+    instance_type: mac_mini_m1
+    environment:
+      xcode: latest
+      cocoapods: default
+      vars:
+        XCODE_WORKSPACE: "ios/Runner.xcworkspace"
+        XCODE_SCHEME: "Runner"
+    scripts:
+      - name: Install Flutter dependencies
+        script: |
+          flutter pub get
+      - name: Pod install with repo update
+        script: |
+          cd ios
+          pod repo update
+          pod install --repo-update
+      - name: Fix Firebase modularity issue
+        script: |
+          cd ios
+          sed -i '' 's/CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES/CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = NO/' Pods/Target\ Support\ Files/Pods-Runner/Pods-Runner.debug.xcconfig
+          sed -i '' 's/CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES/CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = NO/' Pods/Target\ Support\ Files/Pods-Runner/Pods-Runner.release.xcconfig
+          sed -i '' 's/CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES/CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = NO/' Pods/Target\ Support\ Files/Pods-Runner/Pods-Runner.profile.xcconfig
+      - name: Flutter build iOS
+        script: |
+          flutter build ios --release --no-codesign
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
+  
+  android-workflow:
+    name: Android Build
+    instance_type: mac_mini_m1
+    environment:
+      java: 11
+    scripts:
+      - name: Install Flutter dependencies
+        script: |
+          flutter pub get
+      - name: Build Android
+        script: |
+          flutter build appbundle
+    artifacts:
+      - build/app/outputs/bundle/**/*.aab
