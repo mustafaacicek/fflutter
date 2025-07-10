@@ -1,5 +1,6 @@
-module Firebase {
+framework module Firebase {
   umbrella header "Firebase.h"
   export *
   module * { export * }
+  requires objc
 }

@@ -29,6 +29,30 @@ flutter_ios_podfile_setup
 # Firebase sürüm uyumluluğu için
 $FirebaseSDKVersion = '10.25.0'
 
+# Firebase modülerlik sorununu çözmek için
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      # Flutter ve Firebase için minimum iOS sürümünü ayarlama
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
+      
+      # Firebase modülerlik sorununu çözmek için
+      if target.name.start_with?('Firebase') || target.name.include?('Firebase') || target.name.include?('firebase')
+        config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+        config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'YES'
+        config.build_settings['APPLICATION_EXTENSION_API_ONLY'] = 'NO'
+        config.build_settings['DEFINES_MODULE'] = 'YES'
+      end
+      
+      # firebase_messaging için özel ayarlar
+      if target.name.include?('firebase_messaging')
+        config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+        config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
+      end
+    end
+  end
+end
+
 target 'Runner' do
   use_frameworks!
   use_modular_headers!

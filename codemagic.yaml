@@ -14,15 +14,38 @@ workflows:
           flutter pub get
       - name: Update CocoaPods repo
         script: |
-          pod repo update
+          pod repo update --verbose
       - name: Create Firebase modulemap
         script: |
           mkdir -p ios/Runner
           cat > ios/Runner/Firebase.modulemap << EOF
-          module Firebase {
+          framework module Firebase {
             umbrella header "Firebase.h"
             export *
             module * { export * }
+            requires objc
+          }
+          EOF
+          
+          # Pods/Firebase/CoreOnly/Sources dizinine de modulemap oluştur
+          mkdir -p ios/Pods/Firebase/CoreOnly/Sources
+          cat > ios/Pods/Firebase/CoreOnly/Sources/module.modulemap << EOF
+          framework module Firebase {
+            umbrella header "Firebase.h"
+            export *
+            module * { export * }
+            requires objc
+          }
+          EOF
+          
+          # Headers/Public/Firebase dizinine de modulemap oluştur
+          mkdir -p ios/Pods/Headers/Public/Firebase
+          cat > ios/Pods/Headers/Public/Firebase/module.modulemap << EOF
+          framework module Firebase {
+            umbrella header "Firebase.h"
+            export *
+            module * { export * }
+            requires objc
           }
           EOF
       - name: Pod install with forced repo update
@@ -47,18 +70,15 @@ workflows:
           # Tüm Firebase modülleri için ayarlar
           find Pods -path "*/Firebase*" -name "*.xcconfig" -type f -exec sed -i '' 's/CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = NO/CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES/g' {} \;
           
-          # Özel modulemap dosyası oluşturma
-          mkdir -p Pods/Firebase/CoreOnly/Sources
-          cat > Pods/Firebase/CoreOnly/Sources/module.modulemap << EOF
-          module Firebase {
-            umbrella header "Firebase.h"
-            export *
-            module * { export * }
-          }
-          EOF
+          # FLTFirebaseMessagingPlugin.h dosyasını düzenleme
+          find Pods -path "*/firebase_messaging/*" -name "FLTFirebaseMessagingPlugin.h" -type f -exec sed -i '' 's/#import <Firebase\/Firebase.h>/#import "Firebase.h"/g' {} \;
+          
+          # Firebase.h dosyasını kopyalama
+          mkdir -p Pods/Headers/Public/firebase_messaging
+          cp Pods/Firebase/CoreOnly/Sources/Firebase.h Pods/Headers/Public/firebase_messaging/
       - name: Flutter build iOS
         script: |
-          flutter build ios --release --no-codesign
+          flutter build ios --debug --no-codesign
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
