@@ -90,17 +90,28 @@ workflows:
     environment:
       java: 11
       vars:
-        GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx6g -XX:MaxPermSize=3g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8"
+        GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx8g -XX:MaxPermSize=4g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8 -XX:+UseParallelGC"
     scripts:
       - name: Configure Gradle memory settings
         script: |
-          echo "org.gradle.jvmargs=-Xmx6g -XX:MaxPermSize=3g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8" >> android/gradle.properties
+          # Gradle bellek ayarlarını artır
+          echo "org.gradle.jvmargs=-Xmx8g -XX:MaxPermSize=4g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8 -XX:+UseParallelGC" >> android/gradle.properties
           echo "org.gradle.daemon=true" >> android/gradle.properties
           echo "org.gradle.parallel=true" >> android/gradle.properties
           echo "org.gradle.configureondemand=true" >> android/gradle.properties
-          echo "android.enableJetifier=true" >> android/gradle.properties
+          
+          # Jetifier'ı devre dışı bırak (sorun çıkarıyor)
+          echo "android.enableJetifier=false" >> android/gradle.properties
           echo "android.enableR8=true" >> android/gradle.properties
           echo "android.useAndroidX=true" >> android/gradle.properties
+          
+          # Gradle derleme performansını artır
+          echo "org.gradle.caching=true" >> android/gradle.properties
+          echo "android.enableBuildCache=true" >> android/gradle.properties
+          
+          # Dex ayarları
+          echo "android.enableDexingArtifactTransform.desugaring=false" >> android/gradle.properties
+          echo "android.dexOptions.preDexLibraries=false" >> android/gradle.properties
       - name: Install Flutter dependencies
         script: |
           flutter pub get
@@ -108,10 +119,10 @@ workflows:
         script: |
           cd android
           ./gradlew clean
-      - name: Build Android app bundle
+      - name: Build Android APK (Jetifier olmadan)
         script: |
-          flutter build appbundle --debug
+          # Debug APK oluştur (daha az bellek kullanır)
+          flutter build apk --debug --split-per-abi
     artifacts:
-      - build/app/outputs/bundle/debug/app-debug.aab
-      - build/app/outputs/flutter-apk/app-debug.apk
+      - build/app/outputs/flutter-apk/*.apk
       - build/app/outputs/logs/*.log
