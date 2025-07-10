@@ -16,7 +16,7 @@ def flutter_root
   end
 
   File.foreach(generated_xcode_build_settings_path) do |line|
-    matches = line.match(/FLUTTER_ROOT\=(.*)/)
+    matches = line.match(/FLUTTER_ROOT\=(.*)/) 
     return matches[1].strip if matches
   end
   raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}. Try deleting Generated.xcconfig, then run flutter pub get"
@@ -26,6 +26,9 @@ require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelpe
 
 flutter_ios_podfile_setup
 
+# Firebase sürüm uyumluluğu için
+$FirebaseSDKVersion = '10.25.0'
+
 target 'Runner' do
   use_frameworks!
   use_modular_headers!
@@ -33,8 +36,10 @@ target 'Runner' do
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   
   # Firebase için özel sürüm belirtme
-  pod 'Firebase/Core', '10.18.0'
-  pod 'Firebase/Messaging', '10.18.0'
+  pod 'Firebase', $FirebaseSDKVersion
+  pod 'Firebase/Core', $FirebaseSDKVersion
+  pod 'Firebase/Analytics', $FirebaseSDKVersion
+  pod 'Firebase/Messaging', $FirebaseSDKVersion
 end
 
 post_install do |installer|

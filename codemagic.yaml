@@ -12,21 +12,29 @@ workflows:
       - name: Install Flutter dependencies
         script: |
           flutter pub get
+      - name: Update CocoaPods repo
+        script: |
+          pod repo update
       - name: Create Firebase modulemap
         script: |
-          mkdir -p ios/Pods/Headers/Public/Firebase
-          cat > ios/Pods/Headers/Public/Firebase/module.modulemap << EOF
+          mkdir -p ios/Runner
+          cat > ios/Runner/Firebase.modulemap << EOF
           module Firebase {
             umbrella header "Firebase.h"
             export *
             module * { export * }
           }
           EOF
-      - name: Pod install with repo update
+      - name: Pod install with forced repo update
         script: |
           cd ios
-          pod repo update
-          pod install --repo-update
+          # Podfile.lock dosyasını silme
+          rm -f Podfile.lock
+          # Pods klasörünü temizleme
+          rm -rf Pods
+          # Pod repo update ve install
+          pod repo update --verbose
+          pod install --repo-update --verbose
       - name: Fix Firebase modularity issue
         script: |
           cd ios
@@ -62,24 +70,28 @@ workflows:
     environment:
       java: 11
       vars:
-        GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxPermSize=2048m -XX:+HeapDumpOnOutOfMemoryError"
+        GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx6g -XX:MaxPermSize=3g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8"
     scripts:
       - name: Configure Gradle memory settings
         script: |
-          echo "org.gradle.jvmargs=-Xmx4g -XX:MaxPermSize=2048m -XX:+HeapDumpOnOutOfMemoryError" >> android/gradle.properties
+          echo "org.gradle.jvmargs=-Xmx6g -XX:MaxPermSize=3g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8" >> android/gradle.properties
           echo "org.gradle.daemon=true" >> android/gradle.properties
           echo "org.gradle.parallel=true" >> android/gradle.properties
           echo "org.gradle.configureondemand=true" >> android/gradle.properties
           echo "android.enableJetifier=true" >> android/gradle.properties
+          echo "android.enableR8=true" >> android/gradle.properties
+          echo "android.useAndroidX=true" >> android/gradle.properties
       - name: Install Flutter dependencies
         script: |
           flutter pub get
-      - name: Clean before build
+      - name: Clean Android build
         script: |
           cd android
           ./gradlew clean
-      - name: Build Android
+      - name: Build Android app bundle
         script: |
-          flutter build appbundle --debug # Debug modunda derleme yaparak bellek kullanımını azaltıyoruz
+          flutter build appbundle --debug
     artifacts:
-      - build/app/outputs/bundle/**/*.aab
+      - build/app/outputs/bundle/debug/app-debug.aab
+      - build/app/outputs/flutter-apk/app-debug.apk
+      - build/app/outputs/logs/*.log
