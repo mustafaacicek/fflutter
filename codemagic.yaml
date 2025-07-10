@@ -26,28 +26,6 @@ workflows:
             requires objc
           }
           EOF
-          
-          # Pods/Firebase/CoreOnly/Sources dizinine de modulemap oluştur
-          mkdir -p ios/Pods/Firebase/CoreOnly/Sources
-          cat > ios/Pods/Firebase/CoreOnly/Sources/module.modulemap << EOF
-          framework module Firebase {
-            umbrella header "Firebase.h"
-            export *
-            module * { export * }
-            requires objc
-          }
-          EOF
-          
-          # Headers/Public/Firebase dizinine de modulemap oluştur
-          mkdir -p ios/Pods/Headers/Public/Firebase
-          cat > ios/Pods/Headers/Public/Firebase/module.modulemap << EOF
-          framework module Firebase {
-            umbrella header "Firebase.h"
-            export *
-            module * { export * }
-            requires objc
-          }
-          EOF
       - name: Pod install with forced repo update
         script: |
           cd ios
@@ -75,7 +53,30 @@ workflows:
           
           # Firebase.h dosyasını kopyalama
           mkdir -p Pods/Headers/Public/firebase_messaging
-          cp Pods/Firebase/CoreOnly/Sources/Firebase.h Pods/Headers/Public/firebase_messaging/
+          if [ -f "Pods/Firebase/CoreOnly/Sources/Firebase.h" ]; then
+            cp Pods/Firebase/CoreOnly/Sources/Firebase.h Pods/Headers/Public/firebase_messaging/
+          fi
+          
+          # Modulemap dosyalarını oluşturma
+          mkdir -p Pods/Firebase/CoreOnly/Sources
+          cat > Pods/Firebase/CoreOnly/Sources/module.modulemap << EOF
+          framework module Firebase {
+            umbrella header "Firebase.h"
+            export *
+            module * { export * }
+            requires objc
+          }
+          EOF
+          
+          mkdir -p Pods/Headers/Public/Firebase
+          cat > Pods/Headers/Public/Firebase/module.modulemap << EOF
+          framework module Firebase {
+            umbrella header "Firebase.h"
+            export *
+            module * { export * }
+            requires objc
+          }
+          EOF
       - name: Flutter build iOS
         script: |
           flutter build ios --debug --no-codesign
