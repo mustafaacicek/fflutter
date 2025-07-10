@@ -12,6 +12,16 @@ workflows:
       - name: Install Flutter dependencies
         script: |
           flutter pub get
+      - name: Create Firebase modulemap
+        script: |
+          mkdir -p ios/Pods/Headers/Public/Firebase
+          cat > ios/Pods/Headers/Public/Firebase/module.modulemap << EOF
+          module Firebase {
+            umbrella header "Firebase.h"
+            export *
+            module * { export * }
+          }
+          EOF
       - name: Pod install with repo update
         script: |
           cd ios
@@ -20,9 +30,24 @@ workflows:
       - name: Fix Firebase modularity issue
         script: |
           cd ios
-          sed -i '' 's/CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES/CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = NO/' Pods/Target\ Support\ Files/Pods-Runner/Pods-Runner.debug.xcconfig
-          sed -i '' 's/CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES/CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = NO/' Pods/Target\ Support\ Files/Pods-Runner/Pods-Runner.release.xcconfig
-          sed -i '' 's/CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES/CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = NO/' Pods/Target\ Support\ Files/Pods-Runner/Pods-Runner.profile.xcconfig
+          # Düzenleme komutları
+          find Pods -name "*.xcconfig" -type f -exec sed -i '' 's/CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES/CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = NO/g' {} \;
+          
+          # Firebase için özel ayarlar
+          find Pods -path "*/firebase_messaging/*" -name "*.xcconfig" -type f -exec sed -i '' 's/CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = NO/CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES/g' {} \;
+          
+          # Tüm Firebase modülleri için ayarlar
+          find Pods -path "*/Firebase*" -name "*.xcconfig" -type f -exec sed -i '' 's/CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = NO/CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES/g' {} \;
+          
+          # Özel modulemap dosyası oluşturma
+          mkdir -p Pods/Firebase/CoreOnly/Sources
+          cat > Pods/Firebase/CoreOnly/Sources/module.modulemap << EOF
+          module Firebase {
+            umbrella header "Firebase.h"
+            export *
+            module * { export * }
+          }
+          EOF
       - name: Flutter build iOS
         script: |
           flutter build ios --release --no-codesign
@@ -36,12 +61,25 @@ workflows:
     instance_type: mac_mini_m1
     environment:
       java: 11
+      vars:
+        GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxPermSize=2048m -XX:+HeapDumpOnOutOfMemoryError"
     scripts:
+      - name: Configure Gradle memory settings
+        script: |
+          echo "org.gradle.jvmargs=-Xmx4g -XX:MaxPermSize=2048m -XX:+HeapDumpOnOutOfMemoryError" >> android/gradle.properties
+          echo "org.gradle.daemon=true" >> android/gradle.properties
+          echo "org.gradle.parallel=true" >> android/gradle.properties
+          echo "org.gradle.configureondemand=true" >> android/gradle.properties
+          echo "android.enableJetifier=true" >> android/gradle.properties
       - name: Install Flutter dependencies
         script: |
           flutter pub get
+      - name: Clean before build
+        script: |
+          cd android
+          ./gradlew clean
       - name: Build Android
         script: |
-          flutter build appbundle
+          flutter build appbundle --debug # Debug modunda derleme yaparak bellek kullanımını azaltıyoruz
     artifacts:
       - build/app/outputs/bundle/**/*.aab
