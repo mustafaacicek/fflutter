@@ -48,8 +48,30 @@ workflows:
           # Tüm Firebase modülleri için ayarlar
           find Pods -path "*/Firebase*" -name "*.xcconfig" -type f -exec sed -i '' 's/CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = NO/CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES/g' {} \;
           
-          # FLTFirebaseMessagingPlugin.h dosyasını düzenleme
-          find Pods -path "*/firebase_messaging/*" -name "FLTFirebaseMessagingPlugin.h" -type f -exec sed -i '' 's/#import <Firebase\/Firebase.h>/#import "Firebase.h"/g' {} \;
+          # FLTFirebaseMessagingPlugin.h dosyasını düzenleme - Önemli: Firebase.h import'unu tamamen kaldır
+          find Pods -path "*/firebase_messaging/*" -name "FLTFirebaseMessagingPlugin.h" -type f -exec sed -i '' 's/#import <Firebase\/Firebase.h>//g' {} \;
+          
+          # Gerekli Firebase header'larını doğrudan ekle
+          find Pods -path "*/firebase_messaging/*" -name "FLTFirebaseMessagingPlugin.h" -type f -exec sed -i '' '1s/^/#import <FirebaseCore\/FirebaseCore.h>\n#import <FirebaseMessaging\/FirebaseMessaging.h>\n/' {} \;
+          
+          # Modulemap dosyalarını oluşturma
+          mkdir -p Pods/Headers/Public/firebase_messaging
+          
+          # Plugin'in header dosyasını yedekle ve düzenle
+          PLUGIN_HEADER="$(find Pods -path "*/firebase_messaging/*" -name "FLTFirebaseMessagingPlugin.h" | head -n 1)"
+          if [ -n "$PLUGIN_HEADER" ]; then
+            echo "Plugin header found at: $PLUGIN_HEADER"
+            cp "$PLUGIN_HEADER" "${PLUGIN_HEADER}.bak"
+            
+            # Firebase.h import'unu kaldır ve gerekli header'ları ekle
+            sed -i '' 's/#import <Firebase\/Firebase.h>//g' "$PLUGIN_HEADER"
+            sed -i '' '1s/^/#import <FirebaseCore\/FirebaseCore.h>\n#import <FirebaseMessaging\/FirebaseMessaging.h>\n/' "$PLUGIN_HEADER"
+            
+            echo "Modified plugin header:"
+            cat "$PLUGIN_HEADER"
+          else
+            echo "Plugin header not found!"
+          fi
           
           # Firebase.h dosyasını kopyalama
           mkdir -p Pods/Headers/Public/firebase_messaging

@@ -3,6 +3,9 @@ platform :ios, '12.0'
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
+# Firebase modülerlik sorununu çözmek için
+ENV['SWIFT_VERSION'] = '5.0'
+
 project 'Runner', {
   'Debug' => :debug,
   'Profile' => :release,
@@ -33,7 +36,7 @@ $FirebaseSDKVersion = '10.25.0'
 # Not: Tek bir post_install hook'u kullanılmalı
 
 target 'Runner' do
-  use_frameworks!
+  use_frameworks! :linkage => :static
   use_modular_headers!
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
@@ -43,6 +46,11 @@ target 'Runner' do
   pod 'Firebase/Core', $FirebaseSDKVersion
   pod 'Firebase/Analytics', $FirebaseSDKVersion
   pod 'Firebase/Messaging', $FirebaseSDKVersion
+  
+  # Firebase modular header sorunu için
+  pod 'FirebaseCore', :modular_headers => true
+  pod 'FirebaseMessaging', :modular_headers => true
+  pod 'GoogleUtilities', :modular_headers => true
 end
 
 post_install do |installer|
@@ -57,6 +65,10 @@ post_install do |installer|
       # Genel modülerlik ayarları
       config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
       config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
+      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'i386'
+      
+      # Swift versiyon ayarı
+      config.build_settings['SWIFT_VERSION'] = '5.0'
       
       # Firebase modülleri için özel ayarlar
       if target.name.start_with?('Firebase') || target.name.include?('Firebase') || target.name.include?('firebase')
@@ -64,12 +76,31 @@ post_install do |installer|
         config.build_settings['APPLICATION_EXTENSION_API_ONLY'] = 'NO'
         config.build_settings['DEFINES_MODULE'] = 'YES'
         config.build_settings['ONLY_ACTIVE_ARCH'] = 'NO'
+        config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+        config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ["$(inherited)", 'COCOAPODS=1', 'PB_FIELD_32BIT=1', 'PB_NO_PACKED_STRUCTS=1', 'PB_ENABLE_MALLOC=1']
       end
       
       # firebase_messaging için özel ayarlar
       if target.name.include?('firebase_messaging')
         config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
         config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
+        config.build_settings['HEADER_SEARCH_PATHS'] ||= []
+        config.build_settings['HEADER_SEARCH_PATHS'] << "${PODS_ROOT}/Firebase/CoreOnly/Sources"
+        config.build_settings['HEADER_SEARCH_PATHS'] << "${PODS_ROOT}/Headers/Public"
+      end
+    end
+  end
+  
+  # Firebase.h dosyasının import edilme şeklini düzenle
+  installer.pods_project.files.each do |file|
+    if file.path.end_with?('FLTFirebaseMessagingPlugin.h')
+      file_path = file.real_path
+      content = File.read(file_path)
+      new_content = content.gsub(/#import <Firebase\/Firebase.h>/, '#import "Firebase.h"')
+      if new_content != content
+        File.write(file_path, new_content)
+        puts "Modified import in #{file_path}"
       end
     end
   end
